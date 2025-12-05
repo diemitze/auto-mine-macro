@@ -1,0 +1,132 @@
+﻿#Requires AutoHotkey v2
+
+GameTitle := "Roblox"
+toggle := false
+isHolding := false
+
+refreshInterval := 720000
+refreshRemaining := refreshInterval
+
+hud := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x20")
+hud.SetFont("s12 Bold cWhite")
+statusText := hud.AddText("w200 Center", "Auto-Mine: OFF")
+timerText := hud.AddText("w200 Center", "Next refresh: --:--")
+hud.BackColor := "330000"
+hud.Show("x20 y20")
+
+UpdateHUD(false)
+
+XButton2:: {
+    global toggle, isHolding, refreshRemaining, refreshInterval
+
+    if !WinActive(GameTitle)
+        return
+
+    toggle := !toggle
+    UpdateHUD(toggle)
+
+    if toggle {
+        refreshRemaining := refreshInterval
+    } else {
+        if isHolding {
+            Click("up")
+            isHolding := false
+        }
+        timerText.Value := "Next refresh: --:--"
+        hud.BackColor := "330000"
+    }
+}
+
+SetTimer(HoldMouse, 20)
+SetTimer(RefreshTimerTick, 1000)
+
+HoldMouse() {
+    global toggle, isHolding, GameTitle
+
+    if !toggle {
+        if isHolding {
+            Click("up")
+            isHolding := false
+        }
+        return
+    }
+
+    if !WinActive(GameTitle) {
+        if isHolding {
+            Click("up")
+            isHolding := false
+        }
+        return
+    }
+
+    if !isHolding {
+        Sleep(Random(30, 70))
+        Click("down")
+        isHolding := true
+    }
+}
+
+UpdateHUD(state) {
+    global statusText, hud
+    
+    if state {
+        statusText.Value := "Auto-Mine: ON"
+        statusText.SetFont("cLime")
+        hud.BackColor := "003300"
+    } else {
+        statusText.Value := "Auto-Mine: OFF"
+        statusText.SetFont("cRed")
+        hud.BackColor := "330000"
+    }
+}
+
+RefreshTimerTick() {
+    global toggle, refreshRemaining, refreshInterval, timerText, hud, GameTitle, isHolding
+
+    if !toggle
+        return
+
+    refreshRemaining -= 1000
+    if refreshRemaining < 0
+        refreshRemaining := 0
+
+    mins := Floor(refreshRemaining / 60000)
+    secs := Floor(Mod(refreshRemaining, 60000) / 1000)
+    timerText.Value := Format("Next refresh: {:02}:{:02}", mins, secs)
+
+    ;==========================
+    ; Dark fading color
+    ;==========================
+    pct := refreshRemaining / refreshInterval
+
+    r := Floor(0x33 * (1 - pct))  ; dark red
+    g := Floor(0x33 * pct)        ; dark green
+    b := 0
+
+    colorHex := Format("{:02X}{:02X}{:02X}", r, g, b)
+    hud.BackColor := colorHex
+
+    ; Refresh click event
+    if refreshRemaining > 0
+        return
+
+    if WinActive(GameTitle) {
+        if isHolding {
+            Click("up")
+            isHolding := false
+        }
+
+        Sleep(100)
+
+        Loop 3 {
+            Click()
+            Sleep(120 + Random(0,60))
+        }
+
+        Sleep(100)
+        Click("down")
+        isHolding := true
+    }
+
+    refreshRemaining := refreshInterval
+}
