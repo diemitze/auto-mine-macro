@@ -1,3 +1,4 @@
+made for AHKv2
 simple macro for auto mining holds down mouse1 toggles with mouse5
 only works when window is active stops immediately when window is inactive
 
