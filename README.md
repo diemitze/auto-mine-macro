@@ -3,11 +3,12 @@ made for AHKv2
 simple macro for auto mining holds down mouse1 toggles with mouse5
 only works when window is active stops immediately when window is inactive
 
-maode currently for:roblox
+made currently for:roblox
 
 fetures
 gui with status of toggle
-anti afk timer stops for 3 sec clicks mouse1 3 times before resumeing
+anti afk timer
+anti afk
 
 
 Disclamer!
