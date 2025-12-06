@@ -1,16 +1,21 @@
-made for AHK v2
+==========================================
+          Auto Mining Macro for (AHK v2)
+==========================================
 
-simple macro for auto mining holds down mouse1 toggles with mouse5
-only works when window is active stops immediately when window is inactive
+Overview:
+---------
+A simple AutoHotkey v2 macro designed for automatic mining currently in Roblox.
+The script holds down Mouse1 to mine automatically and can be toggled
+on/off using Mouse5.- Only works when the target window is active
+Stops immediately if the window loses focus
+  
+Features:
+---------
+- GUI showing toggle status
+- Built-in Anti-AFK with timer to prevent inactivity
 
-made currently for:roblox
-
-fetures
-gui with status of toggle
-anti afk timer
-anti afk
-
-
-Disclamer!
-Some code in this project was generated with the help of OpenAI's ChatGPT.
+Disclaimer:
+-----------
+Some parts of this project were generated with the help of OpenAI’s ChatGPT.
 All AI-assisted code is licensed under the same terms as this project (MIT License).
+==========================================
