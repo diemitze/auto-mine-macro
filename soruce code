@@ -3,31 +3,40 @@
 GameTitle := "Roblox"
 toggle := false
 isHolding := false
-
 refreshInterval := 720000
 refreshRemaining := refreshInterval
+
 
 hud := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x20")
 hud.SetFont("s12 Bold cWhite")
 statusText := hud.AddText("w200 Center", "Auto-Mine: OFF")
 timerText := hud.AddText("w200 Center", "Next refresh: --:--")
 hud.BackColor := "330000"
-hud.Show("x20 y20")
+hud.Show("x20 y20")  ;
+hwnd := hud.Hwnd
+OnMessage(0x84, (wParam, lParam, msg, hwnd) => 2)
 
+debug := Gui("+AlwaysOnTop -Caption +ToolWindow")
+debug.SetFont("s10 cWhite")
+debug.BackColor := "101010"
+debugCPU := debug.AddText("w200", "CPU: --%")
+debugRBLX := debug.AddText("w200", "RBLX RAM: -- MB")
+debug.Show("x10 y180")
+
+SetTimer(HoldMouse, 20)
+SetTimer(RefreshTimerTick, 1000)
+SetTimer(UpdateDebugHUD, 1000)
 UpdateHUD(false)
 
 XButton2:: {
-    global toggle, isHolding, refreshRemaining, refreshInterval
-
+    global toggle, isHolding, refreshRemaining, GameTitle, timerText, hud
     if !WinActive(GameTitle)
         return
-
     toggle := !toggle
     UpdateHUD(toggle)
-
-    if toggle {
+    if toggle
         refreshRemaining := refreshInterval
-    } else {
+    else {
         if isHolding {
             Click("up")
             isHolding := false
@@ -37,38 +46,8 @@ XButton2:: {
     }
 }
 
-SetTimer(HoldMouse, 20)
-SetTimer(RefreshTimerTick, 1000)
-
-HoldMouse() {
-    global toggle, isHolding, GameTitle
-
-    if !toggle {
-        if isHolding {
-            Click("up")
-            isHolding := false
-        }
-        return
-    }
-
-    if !WinActive(GameTitle) {
-        if isHolding {
-            Click("up")
-            isHolding := false
-        }
-        return
-    }
-
-    if !isHolding {
-        Sleep(Random(30, 70))
-        Click("down")
-        isHolding := true
-    }
-}
-
 UpdateHUD(state) {
     global statusText, hud
-    
     if state {
         statusText.Value := "Auto-Mine: ON"
         statusText.SetFont("cLime")
@@ -80,9 +59,24 @@ UpdateHUD(state) {
     }
 }
 
+HoldMouse() {
+    global toggle, isHolding, GameTitle
+    if !toggle || !WinActive(GameTitle) {
+        if isHolding {
+            Click("up")
+            isHolding := false
+        }
+        return
+    }
+    if !isHolding {
+        Sleep(Random(30,70))
+        Click("down")
+        isHolding := true
+    }
+}
+
 RefreshTimerTick() {
     global toggle, refreshRemaining, refreshInterval, timerText, hud, GameTitle, isHolding
-
     if !toggle
         return
 
@@ -94,19 +88,11 @@ RefreshTimerTick() {
     secs := Floor(Mod(refreshRemaining, 60000) / 1000)
     timerText.Value := Format("Next refresh: {:02}:{:02}", mins, secs)
 
-    ;==========================
-    ; Dark fading color
-    ;==========================
     pct := refreshRemaining / refreshInterval
+    r := Floor(0x33 * (1 - pct))
+    g := Floor(0x33 * pct)
+    hud.BackColor := Format("{:02X}{:02X}00", r, g)
 
-    r := Floor(0x33 * (1 - pct))  ; dark red
-    g := Floor(0x33 * pct)        ; dark green
-    b := 0
-
-    colorHex := Format("{:02X}{:02X}{:02X}", r, g, b)
-    hud.BackColor := colorHex
-
-    ; Refresh click event
     if refreshRemaining > 0
         return
 
@@ -115,14 +101,11 @@ RefreshTimerTick() {
             Click("up")
             isHolding := false
         }
-
         Sleep(100)
-
         Loop 3 {
             Click()
             Sleep(120 + Random(0,60))
         }
-
         Sleep(100)
         Click("down")
         isHolding := true
@@ -130,3 +113,39 @@ RefreshTimerTick() {
 
     refreshRemaining := refreshInterval
 }
+
+UpdateDebugHUD() {
+    global debugCPU, debugRBLX
+    debugCPU.Value := "CPU: " GetCPUUsage() "%"
+    debugRBLX.Value := "Roblox RAM: " GetRobloxRAM() " MB"
+}
+
+GetCPUUsage() {
+    static lastIdle := 0, lastKernel := 0, lastUser := 0
+    idle := 0, kernel := 0, user := 0
+    DllCall("GetSystemTimes", "Int64P", &idle, "Int64P", &kernel, "Int64P", &user)
+    if lastIdle = 0 {
+        lastIdle := idle
+        lastKernel := kernel
+        lastUser := user
+        return 0
+    }
+    idleDelta := idle - lastIdle
+    kernelDelta := kernel - lastKernel
+    userDelta := user - lastUser
+    total := kernelDelta + userDelta
+    lastIdle := idle
+    lastKernel := kernel
+    lastUser := user
+    if total = 0
+        return 0
+    return Round((total - idleDelta) * 100 / total)
+}
+
+GetRobloxRAM() {
+    totalRAM := 0
+    for p in ComObjGet("winmgmts:").ExecQuery("Select * from Win32_Process Where Name LIKE '%Roblox%'")
+        totalRAM += p.WorkingSetSize
+    return Round(totalRAM / 1024 / 1024)
+}
+SetTimer(UpdateDebugHUD, 1000)
