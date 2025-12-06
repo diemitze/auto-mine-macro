@@ -1,5 +1,5 @@
 ==========================================
-          Auto Mining Macro for (AHK v2)
+Auto Mining Macro for (AHK v2)
 ==========================================
 
 Overview:
